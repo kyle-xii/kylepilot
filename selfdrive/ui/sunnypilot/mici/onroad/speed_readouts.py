@@ -48,7 +48,7 @@ class SpeedReadouts(Widget):
     if speed is None:
       return
     value = str(round(speed))
-    size = 82
+    size = 90
     text_width = measure_text_cached(self._font, value, size).x
     x = anchor_x - text_width if align_right else anchor_x - text_width / 2
     rl.draw_text_ex(self._font, value, rl.Vector2(x, top), size, 0, rl.WHITE)
