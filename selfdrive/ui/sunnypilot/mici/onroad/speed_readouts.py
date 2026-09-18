@@ -13,7 +13,6 @@ class SpeedReadouts(Widget):
   def __init__(self):
     super().__init__()
     self._font = gui_app.font(FontWeight.BOLD)
-    self._label_font = gui_app.font(FontWeight.MEDIUM)
     self._cluster_seen = False
     self._speed: float | None = None
     self._lead_speed: float | None = None
@@ -45,20 +44,15 @@ class SpeedReadouts(Widget):
       if lead.status and radar_ok and math.isfinite(car_state.vEgo) and math.isfinite(lead.vRel):
         self._lead_speed = max(0.0, (car_state.vEgo + lead.vRel) * conversion)
 
-  def _draw_readout(self, center_x: float, top: float, label: str, speed: float | None) -> None:
-    width, height = 106, 82
-    card = rl.Rectangle(center_x - width / 2, top, width, height)
-    rl.draw_rectangle_rounded(card, 0.2, 8, rl.Color(0, 0, 0, 160))
-    unit = 'km/h' if ui_state.is_metric else 'mph'
-    value = str(round(speed)) if speed is not None else '—'
-    for text, font, size, y, color in (
-      (label, self._label_font, 12, top + 5, rl.Color(255, 255, 255, 200)),
-      (value, self._font, 42, top + 18, rl.WHITE),
-      (unit, self._label_font, 14, top + 62, rl.Color(255, 255, 255, 200)),
-    ):
-      text_width = measure_text_cached(font, text, size).x
-      rl.draw_text_ex(font, text, rl.Vector2(center_x - text_width / 2, y), size, 0, color)
+  def _draw_readout(self, anchor_x: float, top: float, speed: float | None, align_right: bool = False) -> None:
+    if speed is None:
+      return
+    value = str(round(speed))
+    size = 90
+    text_width = measure_text_cached(self._font, value, size).x
+    x = anchor_x - text_width if align_right else anchor_x - text_width / 2
+    rl.draw_text_ex(self._font, value, rl.Vector2(x, top), size, 0, rl.WHITE)
 
   def _render(self, rect: rl.Rectangle) -> None:
-    self._draw_readout(rect.x + rect.width / 2, rect.y + 12, 'SPEED', self._speed)
-    self._draw_readout(rect.x + rect.width - 16 - 53, rect.y + 12, 'LEAD', self._lead_speed)
+    self._draw_readout(rect.x + rect.width / 2, rect.y - 12, self._speed)
+    self._draw_readout(rect.x + rect.width - 4, rect.y - 12, self._lead_speed, align_right=True)
