@@ -1,3 +1,20 @@
+# kylepilot
+
+A personal fork of sunnypilot v2026.002.002 for comma four.
+
+The driving screen displays vehicle speed at the top center and estimated lead
+vehicle speed at the top right. Both follow the selected mph/km/h setting.
+Missing or stale data displays a dash. The readouts give way to driving alerts.
+This customization only changes the display.
+
+This software is licensed under a custom license requiring permission for use.
+
+This project uses software from Haibin Wen and SUNNYPILOT LLC and is licensed under a custom license requiring permission for use.
+
+See [LICENSE.md](LICENSE.md) and [LICENSE](LICENSE) for the original license notices.
+
+---
+
 ![](https://user-images.githubusercontent.com/47793918/233812617-beab2e71-57b9-479e-8bff-c3931347ca40.png)
 
 ## 🌞 What is sunnypilot?
