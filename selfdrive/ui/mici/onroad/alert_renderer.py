@@ -305,6 +305,10 @@ class AlertRenderer(Widget, SpeedLimitAlertRenderer):
                                  color, translucent_color)
 
   def _draw_text(self, alert: Alert, alert_layout: AlertLayout) -> None:
+    # Keep the lane-change icon while omitting its informational status text.
+    if gui_app.sunnypilot_ui() and alert.alert_type == 'laneChange/warning' and alert.status == AlertStatus.normal:
+      return
+
     icon_side = alert_layout.icon.side if alert_layout.icon is not None else None
 
     # TODO: hack
