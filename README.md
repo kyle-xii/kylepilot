@@ -3,8 +3,11 @@
 A personal fork of sunnypilot v2026.002.002 for comma four.
 
 The driving screen displays vehicle speed at the top center and estimated lead
-vehicle speed at the top right. Both follow the selected mph/km/h setting.
-Missing or stale data displays a dash. The readouts give way to driving alerts.
+vehicle speed at the top right as large, fixed-size white numbers near the screen edges,
+without boxes, labels, or shadows.
+Both follow the selected mph/km/h setting.
+Missing or stale data leaves that readout blank. The readouts give way to driving alerts.
+The informational "Changing Lanes" text is hidden; lane-change icons and other alerts remain.
 This customization only changes the display.
 
 This software is licensed under a custom license requiring permission for use.
