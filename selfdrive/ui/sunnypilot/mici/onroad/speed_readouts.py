@@ -50,7 +50,8 @@ class SpeedReadouts(Widget):
       return
 
     car_state = ui_state.sm['carState']
-    if ui_state.started and car_state.standstill and car_state.vEgo == 0.0:
+    # Start on the first exact-zero sample, without waiting for the standstill signal.
+    if ui_state.started and car_state.vEgo == 0.0:
       now = time.monotonic()
       if self._stopped_since is None:
         self._stopped_since = now
@@ -85,27 +86,28 @@ class SpeedReadouts(Widget):
   def _render(self, rect: rl.Rectangle) -> None:
     self._draw_readout(rect.x + rect.width / 2, rect.y - 12, self._speed)
     self._draw_readout(rect.x + rect.width - 4, rect.y - 12, self._lead_speed, align_right=True)
-    if self._stopped_seconds is not None:
-      minutes, seconds = divmod(self._stopped_seconds, 60)
-      value = f'stopped: {minutes}:{seconds:02d}'
-      size = 40
-      text_width = measure_text_cached(self._font, value, size).x
-      # Clear the torque arc at its maximum 26px offset + 56px height, with an 8px gap.
-      bottom_clearance = 26 + 56 + 8
-      position = rl.Vector2(rect.x + rect.width - 4 - text_width, rect.y + rect.height - size - bottom_clearance)
-      rl.draw_text_ex(self._font, value, position, size, 0, rl.WHITE)
-
+    size = 30
+    value = '0:00'
     if self._trip_seconds is not None:
       hours, remainder = divmod(self._trip_seconds, 3600)
       minutes, seconds = divmod(remainder, 60)
       value = f'{hours}:{minutes:02d}:{seconds:02d}' if hours else f'{minutes}:{seconds:02d}'
-      size = 30
+    text_width = measure_text_cached(self._font, value, size).x
+    # Fit hour-long trips within the space left of the torque arc.
+    while text_width > 96 and size > 1:
+      size -= 1
       text_width = measure_text_cached(self._font, value, size).x
-      # Fit hour-long trips within the space left of the torque arc.
-      while text_width > 96 and size > 1:
-        size -= 1
-        text_width = measure_text_cached(self._font, value, size).x
-      # Center over the wheel where possible, with a 5px gap above it.
-      x = max(rect.x + 4, rect.x + 46 - text_width / 2)
-      position = rl.Vector2(x, rect.y + rect.height - 14 - 50 - 5 - size)
-      rl.draw_text_ex(self._font, value, position, size, 0, rl.WHITE)
+    inset = max(4, 46 - text_width / 2)
+    if self._trip_seconds is not None:
+      self._draw_timer(rect, value, size, inset)
+
+    if self._stopped_seconds is not None:
+      minutes, seconds = divmod(self._stopped_seconds, 60)
+      self._draw_timer(rect, f'stopped: {minutes}:{seconds:02d}', size, inset, mirror=True)
+
+  def _draw_timer(self, rect: rl.Rectangle, value: str, size: int, inset: float, mirror: bool = False) -> None:
+    text_width = measure_text_cached(self._font, value, size).x
+    # Share the left timer's edge inset and 5px gap above the wheel.
+    x = rect.x + rect.width - inset - text_width if mirror else rect.x + inset
+    position = rl.Vector2(x, rect.y + rect.height - 14 - 50 - 5 - size)
+    rl.draw_text_ex(self._font, value, position, size, 0, rl.WHITE)

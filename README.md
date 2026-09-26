@@ -9,8 +9,8 @@ Both follow the selected mph/km/h setting.
 Missing or stale data leaves that readout blank. The readouts give way to driving alerts.
 The informational "Changing Lanes" text is hidden; lane-change icons and other alerts remain.
 A stopped timer labeled "stopped: 0:00" counts minutes and seconds only at zero measured
-vehicle speed with standstill reported. It resets when moving and uses fixed 40px text,
-right-aligned with the lead speed and positioned above the bottom arc at its maximum height.
+vehicle speed, appearing immediately without waiting for the standstill signal. It resets
+when moving and mirrors the left trip timer on the right, sharing its font size and height.
 A 30px trip timer centered above the steering wheel starts with the first vehicle movement,
 keeps counting through stops and disengagements, and resets when the drive ends.
 It displays minutes:seconds, adding hours for longer drives and shrinking only when needed

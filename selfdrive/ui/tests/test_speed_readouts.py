@@ -100,6 +100,7 @@ def test_stopped_timer_counts_and_resets_on_movement(readouts, monkeypatch):
   widget._update_state()
   assert widget._stopped_seconds == 61
   state.sm['carState'].standstill = False
+  state.sm['carState'].vEgo = 0.01
   widget._update_state()
   assert widget._stopped_seconds is None
   state.sm['carState'].vEgo = 0.0
@@ -143,6 +144,7 @@ def test_stopped_timer_resets_when_moving_while_hidden(readouts, monkeypatch):
   widget.render()
   assert widget._stopped_seconds == 20
   state.sm['carState'].standstill = False
+  state.sm['carState'].vEgo = 0.01
   widget.render()
   assert widget._stopped_seconds is None
   state.sm['carState'].vEgo = 0.0
@@ -241,3 +243,58 @@ def test_trip_timer_does_not_start_without_valid_movement(readouts, failure):
     state.started = False
   widget._update_state()
   assert widget._trip_seconds is None
+
+
+@pytest.mark.parametrize('metric', [False, True])
+def test_stopped_timer_starts_immediately_without_standstill(readouts, monkeypatch, metric):
+  widget, state = readouts
+  state.is_metric = metric
+  now = [100.0]
+  monkeypatch.setattr(speed_readouts.time, 'monotonic', lambda: now[0])
+  car = state.sm['carState']
+  car.standstill = False
+  widget._update_state()
+  car.vEgo = 0.0
+  widget._update_state()
+  assert widget._stopped_seconds == 0
+  assert widget._stopped_since == 100.0
+  now[0] = 100.01
+  widget._update_state()
+  assert widget._stopped_seconds == 0
+  now[0] = 101.0
+  car.standstill = True
+  widget._update_state()
+  assert widget._stopped_seconds == 1
+  car.standstill = False
+  widget._update_state()
+  assert widget._stopped_seconds == 1
+
+
+@pytest.mark.parametrize('trip_seconds', [None, 61, 3661, 359999])
+@pytest.mark.parametrize('stopped_seconds', [0, 61, 6000])
+def test_timers_share_font_and_mirrored_layout(readouts, monkeypatch, trip_seconds, stopped_seconds):
+  widget, _ = readouts
+  widget._font = object()
+  widget._speed = widget._lead_speed = None
+  widget._trip_seconds = trip_seconds
+  widget._stopped_seconds = stopped_seconds
+  draws = []
+  monkeypatch.setattr(speed_readouts, 'measure_text_cached', lambda font, text, size: SimpleNamespace(x=len(text) * size / 2))
+  monkeypatch.setattr(speed_readouts.rl, 'draw_text_ex', lambda font, text, pos, size, spacing, color: draws.append((text, pos, size)))
+  rect = speed_readouts.rl.Rectangle(17, 23, 500, 250)
+  widget._render(rect)
+  stopped_text, stopped_pos, stopped_size = draws[-1]
+  assert stopped_text == f'stopped: {stopped_seconds // 60}:{stopped_seconds % 60:02d}'
+  if trip_seconds is not None:
+    trip_text, trip_pos, trip_size = draws[0]
+    assert stopped_size == trip_size
+    assert stopped_pos.y == trip_pos.y
+    assert trip_size <= 30
+    assert len(trip_text) * trip_size / 2 <= 96
+  else:
+    assert stopped_size == 30
+  # The actual left and right timers have equal margins, despite different text widths.
+  left_inset = trip_pos.x - rect.x if trip_seconds is not None else 46 - len('0:00') * stopped_size / 4
+  width = len(stopped_text) * stopped_size / 2
+  assert rect.x + rect.width - stopped_pos.x - width == pytest.approx(left_inset)
+  assert stopped_pos.y == rect.y + rect.height - 69 - stopped_size
