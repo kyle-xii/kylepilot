@@ -8,8 +8,9 @@ without boxes, labels, or shadows.
 Both follow the selected mph/km/h setting.
 Missing or stale data leaves that readout blank. The readouts give way to driving alerts.
 The informational "Changing Lanes" text is hidden; lane-change icons and other alerts remain.
-A stopped timer at the bottom right counts minutes and seconds while the vehicle reports
-standstill. It resets when moving and uses half-size text, right-aligned with the lead speed.
+A stopped timer labeled "stopped: 0:00" counts minutes and seconds only at zero measured
+vehicle speed with standstill reported. It resets when moving and uses fixed 40px text,
+right-aligned with the lead speed and positioned above the bottom arc at its maximum height.
 This customization only changes the display.
 
 This software is licensed under a custom license requiring permission for use.

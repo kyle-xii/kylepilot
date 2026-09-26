@@ -37,7 +37,7 @@ class SpeedReadouts(Widget):
       return
 
     car_state = ui_state.sm['carState']
-    if ui_state.started and car_state.standstill:
+    if ui_state.started and car_state.standstill and car_state.vEgo == 0.0:
       now = time.monotonic()
       if self._stopped_since is None:
         self._stopped_since = now
@@ -74,8 +74,10 @@ class SpeedReadouts(Widget):
     self._draw_readout(rect.x + rect.width - 4, rect.y - 12, self._lead_speed, align_right=True)
     if self._stopped_seconds is not None:
       minutes, seconds = divmod(self._stopped_seconds, 60)
-      value = f'{minutes}:{seconds:02d}'
-      size = 45
+      value = f'stopped: {minutes}:{seconds:02d}'
+      size = 40
       text_width = measure_text_cached(self._font, value, size).x
-      position = rl.Vector2(rect.x + rect.width - 4 - text_width, rect.y + rect.height - size - 4)
+      # Clear the torque arc at its maximum 26px offset + 56px height, with an 8px gap.
+      bottom_clearance = 26 + 56 + 8
+      position = rl.Vector2(rect.x + rect.width - 4 - text_width, rect.y + rect.height - size - bottom_clearance)
       rl.draw_text_ex(self._font, value, position, size, 0, rl.WHITE)

@@ -90,6 +90,7 @@ def test_stopped_timer_counts_and_resets_on_movement(readouts, monkeypatch):
   widget, state = readouts
   now = [100.0]
   monkeypatch.setattr(speed_readouts.time, 'monotonic', lambda: now[0])
+  state.sm['carState'].vEgo = 0.0
   state.sm['carState'].standstill = True
   widget._update_state()
   assert widget._stopped_seconds == 0
@@ -99,6 +100,7 @@ def test_stopped_timer_counts_and_resets_on_movement(readouts, monkeypatch):
   state.sm['carState'].standstill = False
   widget._update_state()
   assert widget._stopped_seconds is None
+  state.sm['carState'].vEgo = 0.0
   state.sm['carState'].standstill = True
   widget._update_state()
   assert widget._stopped_seconds == 0
@@ -109,6 +111,7 @@ def test_stopped_timer_does_not_carry_across_data_gaps_or_drives(readouts, monke
   widget, state = readouts
   now = [100.0]
   monkeypatch.setattr(speed_readouts.time, 'monotonic', lambda: now[0])
+  state.sm['carState'].vEgo = 0.0
   state.sm['carState'].standstill = True
   widget._update_state()
   now[0] = 110.0
@@ -131,6 +134,7 @@ def test_stopped_timer_resets_when_moving_while_hidden(readouts, monkeypatch):
   now = [100.0]
   monkeypatch.setattr(speed_readouts.time, 'monotonic', lambda: now[0])
   widget.set_visible(False)
+  state.sm['carState'].vEgo = 0.0
   state.sm['carState'].standstill = True
   widget.render()
   now[0] = 120.0
@@ -139,6 +143,31 @@ def test_stopped_timer_resets_when_moving_while_hidden(readouts, monkeypatch):
   state.sm['carState'].standstill = False
   widget.render()
   assert widget._stopped_seconds is None
+  state.sm['carState'].vEgo = 0.0
   state.sm['carState'].standstill = True
   widget.render()
+  assert widget._stopped_seconds == 0
+
+
+@pytest.mark.parametrize('speed', [0.01, -0.01, 0.2, float('nan'), float('inf')])
+def test_stopped_timer_requires_zero_actual_speed(readouts, monkeypatch, speed):
+  widget, state = readouts
+  now = [100.0]
+  monkeypatch.setattr(speed_readouts.time, 'monotonic', lambda: now[0])
+  car_state = state.sm['carState']
+  car_state.standstill = True
+  car_state.vEgo = 0.0
+  widget._update_state()
+  now[0] += 10
+  widget._update_state()
+  assert widget._stopped_seconds == 10
+  # Even creep that rounds to 0 mph must clear the timer, despite standstill being true.
+  car_state.vEgo = speed
+  widget._update_state()
+  assert widget._stopped_seconds is None
+  now[0] += 10
+  widget._update_state()
+  assert widget._stopped_seconds is None
+  car_state.vEgo = 0.0
+  widget._update_state()
   assert widget._stopped_seconds == 0
