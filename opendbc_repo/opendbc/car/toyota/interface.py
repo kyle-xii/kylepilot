@@ -1,4 +1,5 @@
 from opendbc.car import Bus, structs, get_safety_config, uds
+from opendbc.car.common.conversions import Conversions as CV
 from opendbc.car.toyota.carstate import CarState
 from opendbc.car.toyota.carcontroller import CarController
 from opendbc.car.toyota.radar_interface import RadarInterface
@@ -66,6 +67,12 @@ class CarInterface(CarInterfaceBase):
         if fw.ecu == "eps" and not fw.fwVersion == b'8965B47060\x00\x00\x00\x00\x00\x00':
           ret.steerActuatorDelay = 0.25
           CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, steering_angle_deadzone_deg=0.2)
+        elif fw.ecu == "eps":
+          # kylepilot: 2019 Prius Prime, values converged by torqued/paramsd over 4.2 h of drives
+          ret.mass = 3375. * CV.LB_TO_KG
+          ret.steerRatio = 16.9
+          ret.lateralTuning.torque.latAccelFactor = 1.5
+          ret.lateralTuning.torque.friction = 0.175
 
     elif candidate in (CAR.LEXUS_RX, CAR.LEXUS_RX_TSS2):
       stop_and_go = True
