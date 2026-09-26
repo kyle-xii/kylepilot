@@ -22,6 +22,8 @@ def readouts(monkeypatch):
   speed_readouts.Widget.__init__(widget)
   widget._cluster_seen = False
   widget._drive_frame = -1
+  widget._trip_since = None
+  widget._trip_seconds = None
   widget._stopped_since = None
   widget._stopped_seconds = None
   monkeypatch.setattr(speed_readouts, 'ui_state', state)
@@ -171,3 +173,71 @@ def test_stopped_timer_requires_zero_actual_speed(readouts, monkeypatch, speed):
   car_state.vEgo = 0.0
   widget._update_state()
   assert widget._stopped_seconds == 0
+
+
+def test_trip_timer_starts_on_movement_and_continues_through_stops(readouts, monkeypatch):
+  widget, state = readouts
+  now = [100.0]
+  monkeypatch.setattr(speed_readouts.time, 'monotonic', lambda: now[0])
+  car = state.sm['carState']
+  car.vEgo = 0.0
+  car.standstill = True
+  widget._update_state()
+  assert widget._trip_seconds is None
+  now[0] = 150.0
+  car.vEgo = 1.0
+  car.standstill = False
+  widget._update_state()
+  assert widget._trip_seconds == 0
+  now[0] = 200.0
+  car.vEgo = 0.0
+  car.standstill = True
+  widget._update_state()
+  assert widget._trip_seconds == 50
+  now[0] = 3811.0
+  widget._update_state()
+  assert widget._trip_seconds == 3661
+  state.started = False
+  widget._update_state()
+  assert widget._trip_seconds is None
+  state.started = True
+  state.started_frame = 90
+  widget._update_state()
+  assert widget._trip_seconds is None
+
+
+def test_trip_timer_survives_data_gaps_and_hidden_alerts_but_not_new_drive(readouts, monkeypatch):
+  widget, state = readouts
+  now = [100.0]
+  monkeypatch.setattr(speed_readouts.time, 'monotonic', lambda: now[0])
+  widget.set_visible(False)
+  widget.render()
+  assert widget._trip_seconds == 0
+  state.sm.alive['carState'] = False
+  now[0] = 130.0
+  widget.render()
+  assert widget._trip_seconds == 30
+  state.sm.alive['carState'] = True
+  now[0] = 160.0
+  widget.render()
+  assert widget._trip_seconds == 60
+  # Offroad screens may not render this widget, so the next drive must also reset it.
+  state.started_frame = 90
+  state.sm['carState'].vEgo = 0.0
+  widget.render()
+  assert widget._trip_seconds is None
+
+
+@pytest.mark.parametrize('failure', ['zero', 'nan', 'infinity', 'standstill', 'stale', 'offroad'])
+def test_trip_timer_does_not_start_without_valid_movement(readouts, failure):
+  widget, state = readouts
+  if failure in ('zero', 'nan', 'infinity'):
+    state.sm['carState'].vEgo = {'zero': 0.0, 'nan': float('nan'), 'infinity': float('inf')}[failure]
+  elif failure == 'standstill':
+    state.sm['carState'].standstill = True
+  elif failure == 'stale':
+    state.sm.alive['carState'] = False
+  else:
+    state.started = False
+  widget._update_state()
+  assert widget._trip_seconds is None

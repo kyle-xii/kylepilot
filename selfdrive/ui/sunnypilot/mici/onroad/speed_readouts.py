@@ -16,6 +16,8 @@ class SpeedReadouts(Widget):
     self._font = gui_app.font(FontWeight.BOLD)
     self._cluster_seen = False
     self._drive_frame = -1
+    self._trip_since: float | None = None
+    self._trip_seconds: int | None = None
     self._stopped_since: float | None = None
     self._stopped_seconds: int | None = None
     self._speed: float | None = None
@@ -32,6 +34,17 @@ class SpeedReadouts(Widget):
     if self._drive_frame != ui_state.started_frame:
       self._drive_frame = ui_state.started_frame
       self._stopped_since = None
+      self._trip_since = None
+
+    if not ui_state.started:
+      self._trip_since = None
+    elif self._trip_since is None and self._fresh('carState'):
+      car_state = ui_state.sm['carState']
+      if not car_state.standstill and math.isfinite(car_state.vEgo) and abs(car_state.vEgo) > 0.0:
+        self._trip_since = time.monotonic()
+    # Continue through stops, disengagements, and temporary carState gaps until the drive ends.
+    self._trip_seconds = None if self._trip_since is None else max(0, int(time.monotonic() - self._trip_since))
+
     if not self._fresh('carState'):
       self._stopped_since = None
       return
@@ -81,3 +94,11 @@ class SpeedReadouts(Widget):
       bottom_clearance = 26 + 56 + 8
       position = rl.Vector2(rect.x + rect.width - 4 - text_width, rect.y + rect.height - size - bottom_clearance)
       rl.draw_text_ex(self._font, value, position, size, 0, rl.WHITE)
+
+    if self._trip_seconds is not None:
+      hours, remainder = divmod(self._trip_seconds, 3600)
+      minutes, seconds = divmod(remainder, 60)
+      value = f'{hours}:{minutes:02d}:{seconds:02d}' if hours else f'{minutes}:{seconds:02d}'
+      # Align with the wheel's left edge and clear its turn-intent arrows and the torque arc.
+      position = rl.Vector2(rect.x + 21, rect.y + rect.height - 40 - 90)
+      rl.draw_text_ex(self._font, value, position, 40, 0, rl.WHITE)
