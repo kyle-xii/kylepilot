@@ -13,6 +13,7 @@ from openpilot.system.ui.lib.application import gui_app
 
 if gui_app.sunnypilot_ui():
   from openpilot.selfdrive.ui.sunnypilot.mici.layouts.settings import SettingsLayoutSP as SettingsLayout
+  from openpilot.selfdrive.ui.sunnypilot.mici.drive_summary import DriveSummaryController, DriveSummaryScreen
 
 ONROAD_DELAY = 2.5  # seconds
 
@@ -27,6 +28,8 @@ class MiciMainLayout(Scroller):
     self._prev_standstill = False
     self._onroad_time_delay: float | None = None
     self._setup = False
+    self._drive_summary = DriveSummaryController() if gui_app.sunnypilot_ui() else None
+    self._summary_screen = None
 
     # Initialize widgets
     self._home_layout = MiciHomeLayout()
@@ -106,6 +109,10 @@ class MiciMainLayout(Scroller):
     if gui_app.widget_in_stack(self._onboarding_window):
       return
 
+    completed_drive = self._drive_summary.update() if self._drive_summary is not None else None
+    if ui_state.started and self._summary_screen is not None and gui_app.widget_in_stack(self._summary_screen):
+      gui_app.pop_widgets_to(self, instant=True)
+
     if ui_state.started != self._prev_onroad:
       self._prev_onroad = ui_state.started
 
@@ -114,6 +121,7 @@ class MiciMainLayout(Scroller):
       if ui_state.started:
         self._onroad_time_delay = rl.get_time()
       else:
+        self._onroad_time_delay = None
         self._scroll_to(self._home_layout)
 
     # FIXME: these two pops can interrupt user interacting in the settings
@@ -123,9 +131,14 @@ class MiciMainLayout(Scroller):
 
     # When car leaves standstill, pop nav stack and scroll to onroad
     CS = ui_state.sm["carState"]
-    if not CS.standstill and self._prev_standstill:
+    if ui_state.started and not CS.standstill and self._prev_standstill:
       gui_app.pop_widgets_to(self, lambda: self._scroll_to(self._onroad_layout))
     self._prev_standstill = CS.standstill
+
+    if completed_drive is not None:
+      gui_app.pop_widgets_to(self, instant=True)
+      self._summary_screen = DriveSummaryScreen(completed_drive)
+      gui_app.push_widget(self._summary_screen)
 
   def _on_interactive_timeout(self):
     # Don't pop if onboarding

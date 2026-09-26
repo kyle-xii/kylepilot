@@ -15,6 +15,11 @@ A 30px trip timer centered above the steering wheel starts with the first vehicl
 keeps counting through stops and disengagements, and resets when the drive ends.
 It displays minutes:seconds, adding hours for longer drives and shrinking only when needed
 to fit above the wheel without clipping or overlapping the arc.
+After ignition turns off, a tappable drive summary shows total drive time, engaged time
+(including steering-only assistance) with its percentage, top speed in mph, and distance
+in miles. Summary times use MM:SS, with total minutes continuing past 59.
+The summary closes on the normal screen timeout or when driving resumes.
+Statistics cover this UI session; missing driving data is flagged rather than estimated.
 This customization only changes the display.
 
 This software is licensed under a custom license requiring permission for use.
