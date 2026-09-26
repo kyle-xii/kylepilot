@@ -57,3 +57,5 @@ class DriveSummaryScreen(NavWidget):
       self._text(value, rect.x + rect.width - 24, y, 26, rl.WHITE, right=True, bold=True)
     footer = 'Some data unavailable · Tap to close' if self.summary.incomplete else 'Tap anywhere to close'
     self._text(footer, rect.x + 24, rect.y + 211, 16, rl.Color(140, 150, 160, 255))
+    self._text('kylepilot', rect.x + rect.width - 16, rect.y + rect.height - 23,
+               12, rl.Color(140, 150, 160, 255), right=True)
