@@ -13,7 +13,8 @@ vehicle speed with standstill reported. It resets when moving and uses fixed 40p
 right-aligned with the lead speed and positioned above the bottom arc at its maximum height.
 A 30px trip timer centered above the steering wheel starts with the first vehicle movement,
 keeps counting through stops and disengagements, and resets when the drive ends.
-It displays minutes:seconds, adding hours for longer drives.
+It displays minutes:seconds, adding hours for longer drives and shrinking only when needed
+to fit above the wheel without clipping or overlapping the arc.
 This customization only changes the display.
 
 This software is licensed under a custom license requiring permission for use.

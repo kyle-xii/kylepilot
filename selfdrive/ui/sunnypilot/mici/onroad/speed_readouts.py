@@ -101,7 +101,11 @@ class SpeedReadouts(Widget):
       value = f'{hours}:{minutes:02d}:{seconds:02d}' if hours else f'{minutes}:{seconds:02d}'
       size = 30
       text_width = measure_text_cached(self._font, value, size).x
-      # Center over the 50px wheel, with a 2px gap above its top edge.
+      # Fit hour-long trips within the space left of the torque arc.
+      while text_width > 96 and size > 1:
+        size -= 1
+        text_width = measure_text_cached(self._font, value, size).x
+      # Center over the wheel where possible, with a 5px gap above it.
       x = max(rect.x + 4, rect.x + 46 - text_width / 2)
-      position = rl.Vector2(x, rect.y + rect.height - 14 - 50 - 2 - size)
+      position = rl.Vector2(x, rect.y + rect.height - 14 - 50 - 5 - size)
       rl.draw_text_ex(self._font, value, position, size, 0, rl.WHITE)
