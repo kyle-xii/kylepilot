@@ -24,8 +24,9 @@ class HudRendererSP(HudRenderer):
   def _render(self, rect: rl.Rectangle) -> None:
     super()._render(rect)
     self.blind_spot_indicators.render(rect)
-    if self._can_draw_top_icons:
-      self._speed_readouts.render(rect)
+    # Update the stopped timer even while alerts temporarily hide the readouts.
+    self._speed_readouts.set_visible(self._can_draw_top_icons)
+    self._speed_readouts.render(rect)
 
   def _has_blind_spot_detected(self) -> bool:
 

@@ -1,5 +1,6 @@
 """Speed readouts for the comma four driving screen."""
 import math
+import time
 import pyray as rl
 
 from openpilot.common.constants import CV
@@ -14,6 +15,9 @@ class SpeedReadouts(Widget):
     super().__init__()
     self._font = gui_app.font(FontWeight.BOLD)
     self._cluster_seen = False
+    self._drive_frame = -1
+    self._stopped_since: float | None = None
+    self._stopped_seconds: int | None = None
     self._speed: float | None = None
     self._lead_speed: float | None = None
 
@@ -24,10 +28,22 @@ class SpeedReadouts(Widget):
   def _update_state(self) -> None:
     # Clear old values before checking messages, including across ignition cycles.
     self._speed = self._lead_speed = None
+    self._stopped_seconds = None
+    if self._drive_frame != ui_state.started_frame:
+      self._drive_frame = ui_state.started_frame
+      self._stopped_since = None
     if not self._fresh('carState'):
+      self._stopped_since = None
       return
 
     car_state = ui_state.sm['carState']
+    if ui_state.started and car_state.standstill:
+      now = time.monotonic()
+      if self._stopped_since is None:
+        self._stopped_since = now
+      self._stopped_seconds = max(0, int(now - self._stopped_since))
+    else:
+      self._stopped_since = None
     conversion = CV.MS_TO_KPH if ui_state.is_metric else CV.MS_TO_MPH
     cluster_speed = car_state.vEgoCluster
     self._cluster_seen |= math.isfinite(cluster_speed) and cluster_speed > 0.0
@@ -56,3 +72,10 @@ class SpeedReadouts(Widget):
   def _render(self, rect: rl.Rectangle) -> None:
     self._draw_readout(rect.x + rect.width / 2, rect.y - 12, self._speed)
     self._draw_readout(rect.x + rect.width - 4, rect.y - 12, self._lead_speed, align_right=True)
+    if self._stopped_seconds is not None:
+      minutes, seconds = divmod(self._stopped_seconds, 60)
+      value = f'{minutes}:{seconds:02d}'
+      size = 45
+      text_width = measure_text_cached(self._font, value, size).x
+      position = rl.Vector2(rect.x + rect.width - 4 - text_width, rect.y + rect.height - size - 4)
+      rl.draw_text_ex(self._font, value, position, size, 0, rl.WHITE)
