@@ -99,6 +99,9 @@ class SpeedReadouts(Widget):
       hours, remainder = divmod(self._trip_seconds, 3600)
       minutes, seconds = divmod(remainder, 60)
       value = f'{hours}:{minutes:02d}:{seconds:02d}' if hours else f'{minutes}:{seconds:02d}'
-      # Align with the wheel's left edge and clear its turn-intent arrows and the torque arc.
-      position = rl.Vector2(rect.x + 21, rect.y + rect.height - 40 - 90)
-      rl.draw_text_ex(self._font, value, position, 40, 0, rl.WHITE)
+      size = 30
+      text_width = measure_text_cached(self._font, value, size).x
+      # Center over the wheel; keep long trips on-screen and clear the turn arrows.
+      x = max(rect.x + 4, rect.x + 46 - text_width / 2)
+      position = rl.Vector2(x, rect.y + rect.height - size - 97)
+      rl.draw_text_ex(self._font, value, position, size, 0, rl.WHITE)

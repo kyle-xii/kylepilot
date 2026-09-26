@@ -11,7 +11,7 @@ The informational "Changing Lanes" text is hidden; lane-change icons and other a
 A stopped timer labeled "stopped: 0:00" counts minutes and seconds only at zero measured
 vehicle speed with standstill reported. It resets when moving and uses fixed 40px text,
 right-aligned with the lead speed and positioned above the bottom arc at its maximum height.
-A 40px trip timer above the steering wheel starts with the first vehicle movement,
+A 30px trip timer centered above the steering wheel starts with the first vehicle movement,
 keeps counting through stops and disengagements, and resets when the drive ends.
 It displays minutes:seconds, adding hours for longer drives.
 This customization only changes the display.
