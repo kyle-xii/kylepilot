@@ -101,7 +101,7 @@ class SpeedReadouts(Widget):
       value = f'{hours}:{minutes:02d}:{seconds:02d}' if hours else f'{minutes}:{seconds:02d}'
       size = 30
       text_width = measure_text_cached(self._font, value, size).x
-      # Center over the wheel; keep long trips on-screen and clear the turn arrows.
+      # Center over the 50px wheel, with a 2px gap above its top edge.
       x = max(rect.x + 4, rect.x + 46 - text_width / 2)
-      position = rl.Vector2(x, rect.y + rect.height - size - 97)
+      position = rl.Vector2(x, rect.y + rect.height - 14 - 50 - 2 - size)
       rl.draw_text_ex(self._font, value, position, size, 0, rl.WHITE)
