@@ -13,6 +13,16 @@ class LatControlTorqueExt(NeuralNetworkLateralControl, LatControlTorqueExtOverri
   def __init__(self, lac_torque, CP, CP_SP, CI):
     NeuralNetworkLateralControl.__init__(self, lac_torque, CP, CP_SP, CI)
     LatControlTorqueExtOverride.__init__(self, CP)
+    self._last_nnlc_enabled = False
+
+  def prepare_update(self):
+    nnlc_enabled = self._nnlc_enabled
+    # The two control modes integrate errors in different units.
+    if nnlc_enabled != self._last_nnlc_enabled:
+      self.lac_torque.pid.reset()
+      self._last_nnlc_enabled = nnlc_enabled
+    self.update_limits()
+    return nnlc_enabled
 
   def update(self, CS, VM, pid, params, ff, pid_log, setpoint, measurement, calibrated_pose, roll_compensation,
              desired_lateral_accel, actual_lateral_accel, lateral_accel_deadzone, gravity_adjusted_lateral_accel,

@@ -64,10 +64,10 @@ class NeuralNetworkLateralControl(LatControlTorqueExtBase):
     return self.enabled and self.model_valid and self.has_nn_model
 
   def update_limits(self):
-    if not self._nnlc_enabled:
-      return
-
-    self._pid.set_limits(self.lac_torque.steer_max, -self.lac_torque.steer_max)
+    if self._nnlc_enabled:
+      self.lac_torque.pid.set_limits(self.lac_torque.steer_max, -self.lac_torque.steer_max)
+    else:
+      self.lac_torque.update_limits()
 
   def update_lateral_lag(self, lag):
     super().update_lateral_lag(lag)

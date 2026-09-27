@@ -65,6 +65,8 @@ class LatControlTorque(LatControl):
     if self.extension.update_override_torque_params(self.torque_params):
       self.update_limits()
 
+    nnlc_enabled = self.extension.prepare_update()
+
     pid_log = log.ControlsState.LateralTorqueState.new_message()
     pid_log.version = VERSION
     if not active:
@@ -100,12 +102,15 @@ class LatControlTorque(LatControl):
       ff += get_friction(error, lateral_accel_deadzone, FRICTION_THRESHOLD, self.torque_params)
 
       freeze_integrator = steer_limited_by_safety or CS.steeringPressed or CS.vEgo < 5
-      output_lataccel = self.pid.update(pid_log.error,
-                                       -measurement_rate,
-                                        feedforward=ff,
-                                        speed=CS.vEgo,
-                                        freeze_integrator=freeze_integrator)
-      output_torque = self.torque_from_lateral_accel(output_lataccel, self.torque_params)
+      output_torque = 0.0
+      # NNLC performs the sole PID update in normalized torque space.
+      if not nnlc_enabled:
+        output_lataccel = self.pid.update(pid_log.error,
+                                         -measurement_rate,
+                                          feedforward=ff,
+                                          speed=CS.vEgo,
+                                          freeze_integrator=freeze_integrator)
+        output_torque = self.torque_from_lateral_accel(output_lataccel, self.torque_params)
 
       # Lateral acceleration torque controller extension updates
       # Overrides pid_log.error and output_torque
